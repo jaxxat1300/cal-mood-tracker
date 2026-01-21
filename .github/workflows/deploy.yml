@@ -39,6 +39,44 @@ jobs:
         env:
           EXPO_PUBLIC_BASE_URL: /cal-mood-tracker
 
+      - name: Fix build output for GitHub Pages
+        run: |
+          cd web-build
+          # Find the actual AppEntry file
+          ENTRY_FILE=$(find _expo/static/js/web -name "AppEntry-*.js" | head -1)
+          if [ -z "$ENTRY_FILE" ]; then
+            echo "Error: AppEntry file not found"
+            ls -la _expo/static/js/web/ || true
+            exit 1
+          fi
+          
+          # Create proper index.html
+          cat > index.html << EOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <meta name="description" content="Cal Mood Tracker - Balance work and life with wellness activities and mood tracking" />
+            <title>Cal Mood Tracker</title>
+            <style>
+              body { margin: 0; padding: 0; }
+              #root { width: 100%; height: 100vh; }
+            </style>
+          </head>
+          <body>
+            <div id="root"></div>
+            <script type="module" src="./$ENTRY_FILE"></script>
+          </body>
+          </html>
+          EOF
+          
+          # Create .nojekyll to prevent Jekyll processing
+          touch .nojekyll
+          
+          echo "Created index.html pointing to: $ENTRY_FILE"
+          ls -la index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
