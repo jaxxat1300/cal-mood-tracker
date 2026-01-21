@@ -26,13 +26,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build web app
-        run: npx expo export:web
+        run: |
+          npx expo export:web
+        env:
+          EXPO_PUBLIC_BASE_URL: /cal-mood-tracker
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
