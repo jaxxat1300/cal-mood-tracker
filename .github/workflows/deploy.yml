@@ -42,40 +42,25 @@ jobs:
       - name: Fix build output for GitHub Pages
         run: |
           cd web-build
-          # Find the actual AppEntry file
-          ENTRY_FILE=$(find _expo/static/js/web -name "AppEntry-*.js" | head -1)
-          if [ -z "$ENTRY_FILE" ]; then
-            echo "Error: AppEntry file not found"
-            ls -la _expo/static/js/web/ || true
-            exit 1
-          fi
           
-          # Create proper index.html
-          cat > index.html << EOF
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <meta name="description" content="Cal Mood Tracker - Balance work and life with wellness activities and mood tracking" />
-            <title>Cal Mood Tracker</title>
-            <style>
-              body { margin: 0; padding: 0; }
-              #root { width: 100%; height: 100vh; }
-            </style>
-          </head>
-          <body>
-            <div id="root"></div>
-            <script type="module" src="./$ENTRY_FILE"></script>
-          </body>
-          </html>
-          EOF
+          # Use Expo's index.html but ensure base path is correct
+          if [ -f index.html ]; then
+            echo "Using Expo's index.html"
+            # Update base path if needed
+            sed -i 's|href="/|href="./|g' index.html || true
+            sed -i 's|src="/|src="./|g' index.html || true
+          fi
           
           # Create .nojekyll to prevent Jekyll processing
           touch .nojekyll
           
-          echo "Created index.html pointing to: $ENTRY_FILE"
-          ls -la index.html
+          # List files for debugging
+          echo "Build output structure:"
+          ls -la | head -20
+          if [ -f index.html ]; then
+            echo "--- index.html content (first 30 lines) ---"
+            head -30 index.html
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

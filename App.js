@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
@@ -8,6 +9,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+
+// Web compatibility
+import './web-compat';
 
 // Screens
 import OnboardingScreen from './src/screens/OnboardingScreen';
