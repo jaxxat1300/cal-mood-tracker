@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@expo/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button from '../components/Button';
 import { theme } from '../styles/theme';
 import { Ionicons } from '@expo/vector-icons';
