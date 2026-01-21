@@ -29,6 +29,7 @@ import NotesScreen from './src/screens/NotesScreen';
 
 // Context
 import { AppProvider } from './src/context/AppContext';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -176,27 +177,29 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <AppProvider>
-          <NavigationContainer>
-            <StatusBar style="auto" />
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              {isFirstLaunch && (
-                <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-              )}
-              {!isAuthenticated ? (
-                <>
-                  <Stack.Screen name="Login" component={LoginScreen} />
-                  <Stack.Screen name="SignUp" component={SignUpScreen} />
-                </>
-              ) : (
-                <Stack.Screen name="Main" component={MainDrawer} />
-              )}
-            </Stack.Navigator>
-          </NavigationContainer>
-        </AppProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <AppProvider>
+            <NavigationContainer>
+              <StatusBar style="auto" />
+              <Stack.Navigator screenOptions={{ headerShown: false }}>
+                {isFirstLaunch && (
+                  <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+                )}
+                {!isAuthenticated ? (
+                  <>
+                    <Stack.Screen name="Login" component={LoginScreen} />
+                    <Stack.Screen name="SignUp" component={SignUpScreen} />
+                  </>
+                ) : (
+                  <Stack.Screen name="Main" component={MainDrawer} />
+                )}
+              </Stack.Navigator>
+            </NavigationContainer>
+          </AppProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }
