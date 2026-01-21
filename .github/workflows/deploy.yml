@@ -35,7 +35,7 @@ jobs:
 
       - name: Build web app
         run: |
-          npx expo export:web
+          npx expo export --platform web --output-dir web-build
         env:
           EXPO_PUBLIC_BASE_URL: /cal-mood-tracker
 
