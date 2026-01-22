@@ -1,30 +1,44 @@
-// Simple prototype version - no complex dependencies
+// Enhanced prototype with more functionality and calming purple design
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from './src/styles/theme';
 
-// Simple screen components
+// Simple data storage (using state - in real app would use AsyncStorage)
+let appData = {
+  moods: [],
+  events: [],
+  notes: [],
+};
+
+// Onboarding Screen
 const OnboardingScreen = ({ onComplete }) => (
-  <View style={styles.container}>
+  <LinearGradient colors={theme.colors.backgroundGradient} style={styles.container}>
     <View style={styles.content}>
-      <Ionicons name="calendar" size={80} color={theme.colors.primary} />
+      <View style={styles.iconCircle}>
+        <Ionicons name="calendar" size={80} color={theme.colors.primary} />
+      </View>
       <Text style={styles.title}>Welcome to Cal Mood Tracker</Text>
       <Text style={styles.subtitle}>Balance work and life with wellness activities</Text>
       <TouchableOpacity style={styles.button} onPress={onComplete}>
         <Text style={styles.buttonText}>Get Started</Text>
       </TouchableOpacity>
     </View>
-  </View>
+  </LinearGradient>
 );
 
+// Login Screen
 const LoginScreen = ({ onLogin, onSignUp }) => (
-  <View style={styles.container}>
+  <LinearGradient colors={theme.colors.backgroundGradient} style={styles.container}>
     <ScrollView contentContainerStyle={styles.scrollContent}>
       <View style={styles.header}>
-        <Ionicons name="calendar" size={60} color={theme.colors.primary} />
+        <View style={styles.iconCircleSmall}>
+          <Ionicons name="calendar" size={60} color={theme.colors.primary} />
+        </View>
         <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subtitle}>Sign in to continue your wellness journey</Text>
       </View>
       <TouchableOpacity style={styles.button} onPress={onLogin}>
         <Text style={styles.buttonText}>Sign In</Text>
@@ -33,163 +47,393 @@ const LoginScreen = ({ onLogin, onSignUp }) => (
         <Text style={[styles.buttonText, styles.secondaryButtonText]}>Sign Up</Text>
       </TouchableOpacity>
     </ScrollView>
-  </View>
+  </LinearGradient>
 );
 
-const DashboardScreen = ({ onNavigate }) => (
+// Dashboard Screen
+const DashboardScreen = ({ onNavigate, currentMood, eventCount, noteCount }) => (
   <View style={styles.container}>
-    <View style={styles.headerBar}>
-      <Text style={styles.headerTitle}>Dashboard</Text>
-      <TouchableOpacity onPress={() => onNavigate('menu')}>
-        <Ionicons name="menu" size={28} color={theme.colors.text} />
-      </TouchableOpacity>
-    </View>
+    <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.headerGradient}>
+      <View style={styles.headerBar}>
+        <View>
+          <Text style={styles.headerGreeting}>Good {getTimeOfDay()}</Text>
+          <Text style={styles.headerSubtitle}>Today is a great day</Text>
+        </View>
+        <TouchableOpacity onPress={() => onNavigate('menu')}>
+          <Ionicons name="menu" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    </LinearGradient>
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Today's Mood</Text>
-        <TouchableOpacity style={styles.moodButton} onPress={() => onNavigate('mood')}>
-          <Text style={styles.moodEmoji}>😊</Text>
-          <Text style={styles.moodText}>Good</Text>
+        <TouchableOpacity style={styles.moodCard} onPress={() => onNavigate('mood')}>
+          <View style={[styles.moodCircle, { backgroundColor: theme.colors.primarySoft }]}>
+            <Text style={styles.moodEmoji}>{currentMood?.emoji || '😊'}</Text>
+          </View>
+          <View style={styles.moodInfo}>
+            <Text style={styles.moodText}>{currentMood?.label || 'Not set yet'}</Text>
+            <Text style={styles.moodSubtext}>Tap to update</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
         </TouchableOpacity>
       </View>
+
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Ionicons name="calendar" size={32} color={theme.colors.primary} />
+          <Text style={styles.statNumber}>{eventCount || 0}</Text>
+          <Text style={styles.statLabel}>Events</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="document-text" size={32} color={theme.colors.accent} />
+          <Text style={styles.statNumber}>{noteCount || 0}</Text>
+          <Text style={styles.statLabel}>Notes</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="flame" size={32} color={theme.colors.secondary} />
+          <Text style={styles.statNumber}>7</Text>
+          <Text style={styles.statLabel}>Streak</Text>
+        </View>
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Quick Actions</Text>
         <TouchableOpacity style={styles.actionButton} onPress={() => onNavigate('calendar')}>
-          <Ionicons name="calendar" size={24} color={theme.colors.primary} />
+          <View style={[styles.actionIcon, { backgroundColor: theme.colors.primarySoft }]}>
+            <Ionicons name="calendar" size={24} color={theme.colors.primary} />
+          </View>
           <Text style={styles.actionText}>Calendar</Text>
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton} onPress={() => onNavigate('mood')}>
-          <Ionicons name="happy" size={24} color={theme.colors.secondary} />
+          <View style={[styles.actionIcon, { backgroundColor: theme.colors.accentLight }]}>
+            <Ionicons name="happy" size={24} color={theme.colors.accent} />
+          </View>
           <Text style={styles.actionText}>Mood Tracker</Text>
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton} onPress={() => onNavigate('notes')}>
-          <Ionicons name="document-text" size={24} color={theme.colors.accent} />
+          <View style={[styles.actionIcon, { backgroundColor: theme.colors.secondaryLight + '40' }]}>
+            <Ionicons name="document-text" size={24} color={theme.colors.secondary} />
+          </View>
           <Text style={styles.actionText}>Notes</Text>
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
         </TouchableOpacity>
       </View>
     </ScrollView>
   </View>
 );
 
-const CalendarScreen = ({ onBack }) => (
-  <View style={styles.container}>
-    <View style={styles.headerBar}>
-      <TouchableOpacity onPress={onBack}>
-        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Calendar</Text>
-      <View style={{ width: 24 }} />
+// Calendar Screen with Add Event
+const CalendarScreen = ({ onBack, events, onAddEvent }) => {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [eventTitle, setEventTitle] = useState('');
+  const [eventTime, setEventTime] = useState('');
+
+  const handleAddEvent = () => {
+    if (eventTitle.trim()) {
+      onAddEvent({
+        id: Date.now(),
+        title: eventTitle,
+        time: eventTime || 'All day',
+        date: new Date().toLocaleDateString(),
+      });
+      setEventTitle('');
+      setEventTime('');
+      setShowAddModal(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.headerGradient}>
+        <View style={styles.headerBar}>
+          <TouchableOpacity onPress={onBack}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Calendar</Text>
+          <TouchableOpacity onPress={() => setShowAddModal(true)}>
+            <Ionicons name="add" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Today's Events</Text>
+          {events.length === 0 ? (
+            <Text style={styles.emptyText}>No events today. Tap + to add one!</Text>
+          ) : (
+            events.map(event => (
+              <View key={event.id} style={styles.eventItem}>
+                <View style={styles.eventDot} />
+                <View style={styles.eventContent}>
+                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  <Text style={styles.eventTime}>{event.time}</Text>
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      <Modal visible={showAddModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Event</Text>
+              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Event title"
+              value={eventTitle}
+              onChangeText={setEventTitle}
+              placeholderTextColor={theme.colors.textMuted}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Time (optional)"
+              value={eventTime}
+              onChangeText={setEventTime}
+              placeholderTextColor={theme.colors.textMuted}
+            />
+            <TouchableOpacity style={styles.button} onPress={handleAddEvent}>
+              <Text style={styles.buttonText}>Add Event</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Calendar View</Text>
-        <Text style={styles.description}>Month, Week, and Day views available</Text>
-        <Text style={styles.description}>Time blocks: 7 AM - 10 PM</Text>
+  );
+};
+
+// Mood Tracker with Save
+const MoodTrackerScreen = ({ onBack, currentMood, onSaveMood }) => {
+  const [selectedMood, setSelectedMood] = useState(currentMood);
+  const moods = [
+    { emoji: '😄', label: 'Excellent', color: theme.colors.success },
+    { emoji: '🙂', label: 'Good', color: theme.colors.accent },
+    { emoji: '😐', label: 'Okay', color: theme.colors.warning },
+    { emoji: '😔', label: 'Poor', color: theme.colors.secondary },
+    { emoji: '😢', label: 'Terrible', color: theme.colors.error },
+  ];
+
+  const handleSave = () => {
+    if (selectedMood) {
+      onSaveMood(selectedMood);
+      onBack();
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.headerGradient}>
+        <View style={styles.headerBar}>
+          <TouchableOpacity onPress={onBack}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Mood Tracker</Text>
+          <View style={{ width: 24 }} />
+        </View>
+      </LinearGradient>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>How are you feeling today?</Text>
+          <View style={styles.moodGrid}>
+            {moods.map((mood, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[
+                  styles.moodOption,
+                  selectedMood?.label === mood.label && styles.moodOptionSelected,
+                  selectedMood?.label === mood.label && { backgroundColor: mood.color + '30' },
+                ]}
+                onPress={() => setSelectedMood(mood)}
+              >
+                <Text style={styles.moodEmojiLarge}>{mood.emoji}</Text>
+                <Text style={[
+                  styles.moodLabel,
+                  selectedMood?.label === mood.label && styles.moodLabelSelected,
+                ]}>
+                  {mood.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity style={styles.button} onPress={handleSave} disabled={!selectedMood}>
+            <Text style={styles.buttonText}>Save Mood</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+// Notes Screen with Add/Delete
+const NotesScreen = ({ onBack, notes, onAddNote, onDeleteNote }) => {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [noteText, setNoteText] = useState('');
+
+  const handleAddNote = () => {
+    if (noteText.trim()) {
+      onAddNote({
+        id: Date.now(),
+        text: noteText,
+        date: new Date().toLocaleDateString(),
+      });
+      setNoteText('');
+      setShowAddModal(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.headerGradient}>
+        <View style={styles.headerBar}>
+          <TouchableOpacity onPress={onBack}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Notes</Text>
+          <TouchableOpacity onPress={() => setShowAddModal(true)}>
+            <Ionicons name="add" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {notes.length === 0 ? (
+          <View style={styles.card}>
+            <Text style={styles.emptyText}>No notes yet. Tap + to add one!</Text>
+          </View>
+        ) : (
+          notes.map(note => (
+            <View key={note.id} style={styles.card}>
+              <View style={styles.noteHeader}>
+                <Text style={styles.noteDate}>{note.date}</Text>
+                <TouchableOpacity onPress={() => onDeleteNote(note.id)}>
+                  <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.noteText}>{note.text}</Text>
+            </View>
+          ))
+        )}
+      </ScrollView>
+
+      <Modal visible={showAddModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>New Note</Text>
+              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Write your note..."
+              value={noteText}
+              onChangeText={setNoteText}
+              placeholderTextColor={theme.colors.textMuted}
+              multiline
+              numberOfLines={6}
+            />
+            <TouchableOpacity style={styles.button} onPress={handleAddNote}>
+              <Text style={styles.buttonText}>Save Note</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+// Menu Screen
+const MenuScreen = ({ onClose, onNavigate }) => (
+  <View style={styles.container}>
+    <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.headerGradient}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity onPress={onClose}>
+          <Ionicons name="close" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Menu</Text>
+        <View style={{ width: 24 }} />
       </View>
+    </LinearGradient>
+    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => { onNavigate('stats'); onClose(); }}>
+        <View style={[styles.menuIcon, { backgroundColor: theme.colors.primarySoft }]}>
+          <Ionicons name="stats-chart" size={24} color={theme.colors.primary} />
+        </View>
+        <Text style={styles.menuText}>Statistics</Text>
+        <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.menuItem} onPress={() => { onNavigate('settings'); onClose(); }}>
+        <View style={[styles.menuIcon, { backgroundColor: theme.colors.accentLight }]}>
+          <Ionicons name="settings" size={24} color={theme.colors.accent} />
+        </View>
+        <Text style={styles.menuText}>Settings</Text>
+        <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.menuItem} onPress={() => { onNavigate('profile'); onClose(); }}>
+        <View style={[styles.menuIcon, { backgroundColor: theme.colors.secondaryLight + '40' }]}>
+          <Ionicons name="person" size={24} color={theme.colors.secondary} />
+        </View>
+        <Text style={styles.menuText}>Profile</Text>
+        <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
+      </TouchableOpacity>
     </ScrollView>
   </View>
 );
 
-const MoodTrackerScreen = ({ onBack }) => (
+// Stats Screen
+const StatsScreen = ({ onBack, moods, events, notes }) => (
   <View style={styles.container}>
-    <View style={styles.headerBar}>
-      <TouchableOpacity onPress={onBack}>
-        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Mood Tracker</Text>
-      <View style={{ width: 24 }} />
-    </View>
+    <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.headerGradient}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity onPress={onBack}>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Statistics</Text>
+        <View style={{ width: 24 }} />
+      </View>
+    </LinearGradient>
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>How are you feeling?</Text>
-        <View style={styles.moodGrid}>
-          {['😄', '🙂', '😐', '😔', '😢'].map((emoji, i) => (
-            <TouchableOpacity key={i} style={styles.moodOption}>
-              <Text style={styles.moodEmojiLarge}>{emoji}</Text>
-            </TouchableOpacity>
-          ))}
+        <Text style={styles.cardTitle}>Your Activity</Text>
+        <View style={styles.statGrid}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{moods.length}</Text>
+            <Text style={styles.statLabel}>Mood Entries</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{events.length}</Text>
+            <Text style={styles.statLabel}>Events</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{notes.length}</Text>
+            <Text style={styles.statLabel}>Notes</Text>
+          </View>
         </View>
       </View>
     </ScrollView>
   </View>
 );
 
-const NotesScreen = ({ onBack }) => (
-  <View style={styles.container}>
-    <View style={styles.headerBar}>
-      <TouchableOpacity onPress={onBack}>
-        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Notes</Text>
-      <View style={{ width: 24 }} />
-    </View>
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Your Notes</Text>
-        <Text style={styles.description}>Add tasks and notes here</Text>
-      </View>
-    </ScrollView>
-  </View>
-);
-
-const MenuScreen = ({ onClose, onNavigate }) => (
-  <View style={styles.container}>
-    <View style={styles.headerBar}>
-      <TouchableOpacity onPress={onClose}>
-        <Ionicons name="close" size={24} color={theme.colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Menu</Text>
-      <View style={{ width: 24 }} />
-    </View>
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-      <TouchableOpacity style={styles.menuItem} onPress={() => { onNavigate('stats'); onClose(); }}>
-        <Ionicons name="stats-chart" size={24} color={theme.colors.primary} />
-        <Text style={styles.menuText}>Stats</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.menuItem} onPress={() => { onNavigate('settings'); onClose(); }}>
-        <Ionicons name="settings" size={24} color={theme.colors.primary} />
-        <Text style={styles.menuText}>Settings</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.menuItem} onPress={() => { onNavigate('profile'); onClose(); }}>
-        <Ionicons name="person" size={24} color={theme.colors.primary} />
-        <Text style={styles.menuText}>Profile</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  </View>
-);
-
-const StatsScreen = ({ onBack }) => (
-  <View style={styles.container}>
-    <View style={styles.headerBar}>
-      <TouchableOpacity onPress={onBack}>
-        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Statistics</Text>
-      <View style={{ width: 24 }} />
-    </View>
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Your Stats</Text>
-        <Text style={styles.statNumber}>15</Text>
-        <Text style={styles.statLabel}>Events</Text>
-        <Text style={styles.statNumber}>8</Text>
-        <Text style={styles.statLabel}>Mood Entries</Text>
-        <Text style={styles.statNumber}>7</Text>
-        <Text style={styles.statLabel}>Day Streak</Text>
-      </View>
-    </ScrollView>
-  </View>
-);
-
+// Settings Screen
 const SettingsScreen = ({ onBack }) => (
   <View style={styles.container}>
-    <View style={styles.headerBar}>
-      <TouchableOpacity onPress={onBack}>
-        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Settings</Text>
-      <View style={{ width: 24 }} />
-    </View>
+    <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.headerGradient}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity onPress={onBack}>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Settings</Text>
+        <View style={{ width: 24 }} />
+      </View>
+    </LinearGradient>
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>App Settings</Text>
@@ -199,31 +443,59 @@ const SettingsScreen = ({ onBack }) => (
   </View>
 );
 
+// Profile Screen
 const ProfileScreen = ({ onBack }) => (
   <View style={styles.container}>
-    <View style={styles.headerBar}>
-      <TouchableOpacity onPress={onBack}>
-        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Profile</Text>
-      <View style={{ width: 24 }} />
-    </View>
+    <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.headerGradient}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity onPress={onBack}>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Profile</Text>
+        <View style={{ width: 24 }} />
+      </View>
+    </LinearGradient>
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>User Profile</Text>
+        <View style={styles.profileAvatar}>
+          <Ionicons name="person" size={60} color={theme.colors.primary} />
+        </View>
+        <Text style={styles.profileName}>User</Text>
         <Text style={styles.description}>Edit your profile information</Text>
       </View>
     </ScrollView>
   </View>
 );
 
+// Main App
 export default function App() {
   const [screen, setScreen] = useState('onboarding');
   const [showMenu, setShowMenu] = useState(false);
+  const [moods, setMoods] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [notes, setNotes] = useState([]);
 
   const navigate = (newScreen) => {
     setScreen(newScreen);
     setShowMenu(false);
+  };
+
+  const currentMood = moods.length > 0 ? moods[moods.length - 1] : null;
+
+  const handleSaveMood = (mood) => {
+    setMoods([...moods, { ...mood, id: Date.now(), date: new Date().toLocaleDateString() }]);
+  };
+
+  const handleAddEvent = (event) => {
+    setEvents([...events, event]);
+  };
+
+  const handleAddNote = (note) => {
+    setNotes([...notes, note]);
+  };
+
+  const handleDeleteNote = (id) => {
+    setNotes(notes.filter(note => note.id !== id));
   };
 
   if (showMenu) {
@@ -245,16 +517,56 @@ export default function App() {
           onSignUp={() => navigate('dashboard')} 
         />
       )}
-      {screen === 'dashboard' && <DashboardScreen onNavigate={navigate} />}
-      {screen === 'calendar' && <CalendarScreen onBack={() => navigate('dashboard')} />}
-      {screen === 'mood' && <MoodTrackerScreen onBack={() => navigate('dashboard')} />}
-      {screen === 'notes' && <NotesScreen onBack={() => navigate('dashboard')} />}
-      {screen === 'stats' && <StatsScreen onBack={() => navigate('dashboard')} />}
+      {screen === 'dashboard' && (
+        <DashboardScreen 
+          onNavigate={navigate}
+          currentMood={currentMood}
+          eventCount={events.length}
+          noteCount={notes.length}
+        />
+      )}
+      {screen === 'calendar' && (
+        <CalendarScreen 
+          onBack={() => navigate('dashboard')}
+          events={events}
+          onAddEvent={handleAddEvent}
+        />
+      )}
+      {screen === 'mood' && (
+        <MoodTrackerScreen 
+          onBack={() => navigate('dashboard')}
+          currentMood={currentMood}
+          onSaveMood={handleSaveMood}
+        />
+      )}
+      {screen === 'notes' && (
+        <NotesScreen 
+          onBack={() => navigate('dashboard')}
+          notes={notes}
+          onAddNote={handleAddNote}
+          onDeleteNote={handleDeleteNote}
+        />
+      )}
+      {screen === 'stats' && (
+        <StatsScreen 
+          onBack={() => navigate('dashboard')}
+          moods={moods}
+          events={events}
+          notes={notes}
+        />
+      )}
       {screen === 'settings' && <SettingsScreen onBack={() => navigate('dashboard')} />}
       {screen === 'profile' && <ProfileScreen onBack={() => navigate('dashboard')} />}
     </>
   );
 }
+
+const getTimeOfDay = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Morning';
+  if (hour < 17) return 'Afternoon';
+  return 'Evening';
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -273,24 +585,54 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: theme.spacing.md,
   },
+  headerGradient: {
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+  },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
-    backgroundColor: theme.colors.white,
-    ...theme.shadows.sm,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: theme.colors.text,
   },
+  headerGreeting: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
   header: {
     alignItems: 'center',
     marginBottom: theme.spacing.xl,
+  },
+  iconCircle: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: theme.colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.lg,
+  },
+  iconCircleSmall: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.md,
   },
   title: {
     fontSize: 28,
@@ -305,6 +647,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textLight,
     textAlign: 'center',
     marginBottom: theme.spacing.xl,
+    lineHeight: 24,
   },
   button: {
     backgroundColor: theme.colors.primary,
@@ -314,6 +657,7 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.sm,
     minWidth: 200,
     alignItems: 'center',
+    ...theme.shadows.md,
   },
   secondaryButton: {
     backgroundColor: 'transparent',
@@ -345,30 +689,98 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textLight,
     marginBottom: theme.spacing.sm,
+    lineHeight: 20,
   },
-  moodButton: {
+  moodCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
+  },
+  moodCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.md,
   },
   moodEmoji: {
-    fontSize: 48,
-    marginBottom: theme.spacing.sm,
+    fontSize: 32,
+  },
+  moodInfo: {
+    flex: 1,
   },
   moodText: {
     fontSize: 18,
     fontWeight: '600',
     color: theme.colors.text,
   },
+  moodSubtext: {
+    fontSize: 14,
+    color: theme.colors.textLight,
+  },
   moodGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing.md,
+  },
+  moodOption: {
+    width: '30%',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.sm,
+  },
+  moodOptionSelected: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+  },
+  moodEmojiLarge: {
+    fontSize: 36,
+    marginBottom: theme.spacing.xs,
+  },
+  moodLabel: {
+    fontSize: 12,
+    color: theme.colors.text,
+    textAlign: 'center',
+  },
+  moodLabelSelected: {
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.md,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    marginHorizontal: theme.spacing.xs,
+    ...theme.shadows.sm,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginTop: theme.spacing.xs,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: theme.colors.textLight,
+    marginTop: 4,
+  },
+  statGrid: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: theme.spacing.md,
   },
-  moodOption: {
-    padding: theme.spacing.md,
-  },
-  moodEmojiLarge: {
-    fontSize: 40,
+  statItem: {
+    alignItems: 'center',
   },
   actionButton: {
     flexDirection: 'row',
@@ -378,10 +790,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.backgroundLight,
     borderRadius: theme.borderRadius.md,
   },
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.md,
+  },
   actionText: {
-    marginLeft: theme.spacing.md,
+    flex: 1,
     fontSize: 16,
     color: theme.colors.text,
+    fontWeight: '500',
   },
   menuItem: {
     flexDirection: 'row',
@@ -391,22 +812,123 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: theme.borderRadius.md,
   },
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.md,
+  },
   menuText: {
-    marginLeft: theme.spacing.md,
+    flex: 1,
     fontSize: 16,
     color: theme.colors.text,
+    fontWeight: '500',
   },
-  statNumber: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: theme.colors.primary,
+  eventItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.borderLight,
+  },
+  eventDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.primary,
+    marginRight: theme.spacing.md,
+  },
+  eventContent: {
+    flex: 1,
+  },
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.text,
+  },
+  eventTime: {
+    fontSize: 14,
+    color: theme.colors.textLight,
+    marginTop: 2,
+  },
+  noteHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  noteDate: {
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  noteText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    lineHeight: 24,
+  },
+  profileAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: theme.colors.text,
     textAlign: 'center',
-    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
-  statLabel: {
+  emptyText: {
     fontSize: 14,
     color: theme.colors.textLight,
     textAlign: 'center',
+    padding: theme.spacing.lg,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+  },
+  modalContent: {
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    width: '100%',
+    maxWidth: 400,
+    ...theme.shadows.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: theme.spacing.md,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  input: {
+    backgroundColor: theme.colors.backgroundLight,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    fontSize: 16,
+    color: theme.colors.text,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+  textArea: {
+    height: 120,
+    textAlignVertical: 'top',
   },
 });
